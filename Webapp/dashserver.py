@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 import datetime as dt
 import sys
 
-
 try:
     conn = mariadb.connect(
         user="root",
@@ -78,21 +77,38 @@ df = getdb(conn,cur)
 app = dash.Dash(__name__, prevent_initial_callbacks=True)
 
 app.layout = html.Div([
-    html.H2("Bart Battery Viewer"),
-    html.Button("Download csv", id="btn"), 
-    Download(id="download"),
-    dcc.Dropdown(
-        id = 'Loc', 
-        options=[{'label': i, 'value': i} for i in df.Location.unique()]),
-    dcc.Dropdown(
-        id = 'yaxis', 
-        options=[{'label': i, 'value': i} for i in list(df)]),
-    dcc.Dropdown(
-        id = 'Tags', 
-        options=[{'label': i, 'value': i} for i in ["Tag1", "Tag2", "Tag3", "Tag4"]]),      
-    #dcc.Dropdown(
-    #    id = 'cell', 
-    #    options=df.CellNo.unique()),
+    html.Div(
+    children=[html.H2("Bart Battery Viewer")],
+    style=dict(display='flex', justifyContent='center')
+    ),
+    html.Div(
+    children=[html.Button("Download csv", id="btn"), 
+    Download(id="download"),],
+    style=dict(display='flex', justifyContent='center')
+    ),
+    html.Div(className = "row", children=[
+        html.Div(className="four columns", children=[
+            html.Label(['Locations:'], style={'font-weight': 'bold', "text-align": "center"}),
+            dcc.Dropdown(
+            id = 'Loc', 
+            options=[{'label': i, 'value': i} for i in df.Location.unique()]),
+        ],style=dict(width='33.33%')),
+        html.Div(className="four columns", children=[
+            html.Label(['Y-Axis:'], style={'font-weight': 'bold', "text-align": "center"}),
+            dcc.Dropdown(
+            id = 'yaxis', 
+            options=[{'label': i, 'value': i} for i in list(df)]),
+        ],style=dict(width='33.33%')),
+        html.Div(className="four columns", children=[
+            html.Label(['Error Type:'], style={'font-weight': 'bold', "text-align": "center"}),
+            dcc.Dropdown(
+            id = 'Tags', 
+            options=[{'label': i, 'value': i} for i in ["Tag1", "Tag2", "Tag3", "Tag4"]]),   
+        ],style=dict(width='33.33%')),
+        #dcc.Dropdown(
+        #    id = 'cell', 
+        #    options=df.CellNo.unique()),
+    ],style=dict(display='flex')),
     dcc.Graph(id="graph", style={'width': '180vh', 'height': '180vh'}),
     html.H2("Errors/Outliers"),
     dash_table.DataTable(
@@ -126,7 +142,7 @@ def update_graph(Locname, yaxisname, Tag):
     wrap = 6
     #im like 60% sure this is causing some errors (webpage randomly refreshes) I may have fixed it tho
     fig = go.Figure()
-    if Locname is not None and yaxisname is not None is not Tag != None:
+    if Locname is not None and yaxisname is not None is not Tag is not None:
         df = getdb(conn,cur)
         df = df[df["Location"] == Locname]
         if Locname == "Daly City Station":
