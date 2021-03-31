@@ -2,6 +2,8 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
+from dash_extensions import Download
+from dash_extensions.snippets import send_data_frame
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
@@ -49,7 +51,7 @@ result["Tag3"] = "blue"
 result["Tag4"] = "blue"
 
 #though this looks repeatative it is ALOT faster than the for loop
-#tag number 1 30% deviation from set means
+#tag number 1 30% deviation from set means (adjacent cells to this one need to be logged)
 result.loc[(result["ResistValue"] <= .70*result["ResistMean"]) | (result["ResistValue"] >= 1.3*result["ResistMean"]), "Tag1"] = "red"
 #tag number 2 ambient temp > 30 (current none in our dataset)
 result.loc[(result["AmbientTemp"] > 30), "Tag2"] = "red"
@@ -73,10 +75,12 @@ def getdb(conn,cur):
 
 df = getdb(conn,cur)
 
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, prevent_initial_callbacks=True)
 
 app.layout = html.Div([
     html.H2("Bart Battery Viewer"),
+    html.Button("Download csv", id="btn"), 
+    Download(id="download"),
     dcc.Dropdown(
         id = 'Loc', 
         options=[{'label': i, 'value': i} for i in df.Location.unique()]),
@@ -120,6 +124,7 @@ def updateTable(Locname, Tag):
     Input('Tags', 'value')])
 def update_graph(Locname, yaxisname, Tag):
     wrap = 6
+    #im like 60% sure this is causing some errors (webpage randomly refreshes)
     fig = go.Figure()
     if Locname != None and yaxisname != None and Tag != None:
         df = getdb(conn,cur)
@@ -129,5 +134,12 @@ def update_graph(Locname, yaxisname, Tag):
         fig = px.scatter(df, x="KeyTime", y=yaxisname, color=Tag, facet_col="CellNo",facet_col_wrap=wrap)
         fig.update_yaxes(matches=None, showticklabels=True)
     return fig
+
+@app.callback(Output("download", "data"), 
+    [Input("btn", "n_clicks")])
+def generate_csv(n_nlicks):
+        df = getdb(conn,cur)
+        #can do stuff  to dataframe here
+        return send_data_frame(df.to_csv, filename="battdata.csv")
 
 app.run_server(debug=True)
