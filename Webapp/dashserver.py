@@ -108,7 +108,7 @@ app.layout = html.Div([
     [Input('Loc', 'value'),
     Input('Tags', 'value')])
 def updateTable(Locname, Tag):
-    if Locname != None and Tag != None:
+    if Locname is not None and Tag is not None:
         df = getdb(conn,cur) 
         #might wanna change to contains
         #prob limit more columns for visability
@@ -124,9 +124,9 @@ def updateTable(Locname, Tag):
     Input('Tags', 'value')])
 def update_graph(Locname, yaxisname, Tag):
     wrap = 6
-    #im like 60% sure this is causing some errors (webpage randomly refreshes)
+    #im like 60% sure this is causing some errors (webpage randomly refreshes) I may have fixed it tho
     fig = go.Figure()
-    if Locname != None and yaxisname != None and Tag != None:
+    if Locname is not None and yaxisname is not None is not Tag != None:
         df = getdb(conn,cur)
         df = df[df["Location"] == Locname]
         if Locname == "Daly City Station":
