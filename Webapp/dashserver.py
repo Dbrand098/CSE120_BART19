@@ -109,7 +109,16 @@ app.layout = html.Div([
         #    id = 'cell', 
         #    options=df.CellNo.unique()),
     ],style=dict(display='flex')),
-    dcc.Graph(id="graph", style={'width': '180vh', 'height': '180vh'}),
+    html.Div(children=[
+    html.Label(['Cell Range:'], style={'font-weight': 'bold', "text-align": "center"}),
+    html.Div(id='range-slider-label'),
+    dcc.RangeSlider(
+        id='rangeslider',
+        min=0,
+        step=1,
+    ),
+    ]),
+    dcc.Graph(id="graph"),
     html.H2("Errors/Outliers"),
     dash_table.DataTable(
         id = 'table',
@@ -137,17 +146,22 @@ def updateTable(Locname, Tag):
     Output("graph", "figure"), 
     [Input("Loc", "value"),
     Input("yaxis", "value"),
-    Input('Tags', 'value')])
-def update_graph(Locname, yaxisname, Tag):
-    wrap = 6
+    Input('Tags', 'value'),
+    Input('rangeslider', 'value')])
+def update_graph(Locname, yaxisname, Tag, srange):
     #im like 60% sure this is causing some errors (webpage randomly refreshes) I may have fixed it tho
     fig = go.Figure()
-    if Locname is not None and yaxisname is not None is not Tag is not None:
+    if Locname is not None and yaxisname is not None is not Tag is not None and srange is not None:
         df = getdb(conn,cur)
-        df = df[df["Location"] == Locname]
+        df = df[(df["Location"] == Locname) & (df["CellNo"] >= srange[0]) & (df["CellNo"] <= srange[1])]
+        wrap = 6
         if Locname == "Daly City Station":
-            wrap = 18
-        fig = px.scatter(df, x="KeyTime", y=yaxisname, color=Tag, facet_col="CellNo",facet_col_wrap=wrap)
+            wrap = 12
+        if srange[1]-srange[0] < 10:
+            gheight = 300
+        else:
+            gheight = 30*(srange[1]-srange[0])
+        fig = px.scatter(df, x="KeyTime", y=yaxisname, color=Tag, facet_col="CellNo",facet_col_wrap=wrap, height=gheight)
         fig.update_yaxes(matches=None, showticklabels=True)
     return fig
 
@@ -157,5 +171,18 @@ def generate_csv(n_nlicks):
         df = getdb(conn,cur)
         #can do stuff  to dataframe here
         return send_data_frame(df.to_csv, filename="battdata.csv")
+
+@app.callback([Output('rangeslider', 'max')],
+              [Input('Loc', 'value')])
+def update_slider(Locname):
+    df = getdb(conn,cur)
+    df = df[df["Location"] == Locname]
+    max = round(int(df["CellNo"].max())),
+    return max
+
+@app.callback(Output('range-slider-label', 'children'),
+    [Input('rangeslider', 'value')])
+def update_output(value):
+    return 'Cells {} are selected for viewing'.format(value)
 
 app.run_server(debug=True)
