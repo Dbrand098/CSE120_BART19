@@ -34,6 +34,11 @@ cur = conn.cursor()
 query = """select history.cells.KeyTime, Location, CellNo, VoltValue, ResistValue, TempValue, TotalVolt, TotalCurrent, AmbientTemp from history.cells, info.bankinfo, history.bankdata 
         where history.bankdata.BankId = info.bankinfo.BankId and history.bankdata.KeyTime = history.cells.KeyTime and info.bankinfo.BankId = history.cells.BankId order by Location"""
 
+query2 = """select history.bankdata.KeyTime, Location, AmbientTemp from info.bankinfo, history.bankdata 
+        where history.bankdata.BankId = info.bankinfo.BankId"""
+ambientdataframe = pd.read_sql_query(query2, conn)
+ambientdataframe.set_index('KeyTime', inplace=True)
+
 df1 = pd.read_sql_query(query, conn)
 
 #testmean.csv is our battery commisioning feature
@@ -53,6 +58,7 @@ result["Tag1"] = "blue"
 result["Tag2"] = "blue"
 result["Tag3"] = "blue"
 result["Tag4"] = "blue"
+result["Tag5"] = "blue"
 
 #though this looks repeatative it is ALOT faster than the for loop
 #tag number 1 30% deviation from set means (adjacent cells to this one need to be logged)
@@ -63,12 +69,13 @@ result.loc[(result["AmbientTemp"] > 30), "Tag2"] = "red"
 result.loc[(result["TempValue"] > 3+result["AmbientTemp"]), "Tag3"] = "yellow"
 #tag 4 (idk what ripple current is yet)
 #result.at[i, "VoltValue"]/result.at[i, "ResistValue"] > .0005*result.at[i, "TotalCurrent"]:
+#tag 5
+result.loc[(result["TempValue"] > 3+ result["TempValuetest"]), "Tag5"] = "orange"
 
 #put this in separate table
 #track ambient temp over 25 by how much and for how long
+    #each time something is over 25, how long is it over 25
 #gaps are not expected
-
-#calculate tempmean per keytime and Location
 
 #structure for iterating through dataframe with for loop (alot slower runtime)
 #for i in result.index:
@@ -109,7 +116,7 @@ app.layout = html.Div([
             html.Label(['Error Type:'], style={'font-weight': 'bold', "text-align": "center"}),
             dcc.Dropdown(
             id = 'Tags', 
-            options=[{'label': i, 'value': i} for i in ["Tag1", "Tag2", "Tag3", "Tag4"]]),   
+            options=[{'label': i, 'value': i} for i in ["Tag1", "Tag2", "Tag3", "Tag4", "Tag5"]]),   
         ],style=dict(width='33.33%')),
         #dcc.Dropdown(
         #    id = 'cell', 
@@ -149,6 +156,7 @@ app.layout = html.Div([
         #html.Div(
         #children=[html.Button("Download csv", id="btn"), 
         Download(id="download"),
+        Download(id="download2"),
         #],
         #style=dict(width='50%', display='flex')
         #),
@@ -157,6 +165,12 @@ app.layout = html.Div([
     html.H2("Errors/Outliers"),
     dash_table.DataTable(
         id = 'table',
+        style_data={ 'border': '1px solid grey' },
+        virtualization=True,
+    ),
+    html.H2("Battery Life"),
+    dash_table.DataTable(
+        id = 'tablel',
         style_data={ 'border': '1px solid grey' },
         virtualization=True,
     ),
@@ -212,7 +226,7 @@ def generate_csv(start, end, Locname):
         df = getdb(conn,cur)
         df = df[(df["Location"] == Locname) & (df["KeyTime"] >= start) & (df["KeyTime"] <= end)]
         #can do stuff  to dataframe here
-        return send_data_frame(df.to_csv, filename="battdata.csv")
+        return send_data_frame(df.to_csv, filename="battdata.csv", index=False)
 
 @app.callback([Output('rangeslider', 'max')],
               [Input('Loc', 'value')])
@@ -229,4 +243,27 @@ def update_slider(Locname):
 def update_output(value):
     return 'Cells {} are selected for viewing'.format(value)
 
-app.run_server(debug=False)
+@app.callback(
+    [Output('tablel', 'data'),
+    Output('tablel','columns')],
+    [Input("Loc", "value"),])
+def generate_csv(Locname):
+    if Locname is not None:
+        df2 = ambientdataframe[ambientdataframe["Location"] == Locname]
+
+        temp = 0
+        previ = 0
+        lst = []
+        for i in df2.index:
+            if df2.at[i, "AmbientTemp"] >= 25 and temp == 0:
+                temp = i
+            if df2.at[i, "AmbientTemp"] < 25 and temp != 0 and temp < previ:
+                lst.append([temp, previ, previ - temp])
+                temp = 0
+            previ = i
+        df2 = pd.DataFrame(lst)
+        df2.columns = ["TimeStart","TimeEnd", "Length"]
+        col = [{"name": i, "id": i} for i in list(df2.columns)]
+        return df2.to_dict('records'), col
+    return [],[]
+app.run_server(debug=True)
