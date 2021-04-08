@@ -258,7 +258,7 @@ def generate_csv(Locname):
             if df2.at[i, "AmbientTemp"] >= 25 and temp == 0:
                 temp = i
             if df2.at[i, "AmbientTemp"] < 25 and temp != 0 and temp < previ:
-                lst.append([temp, previ, previ - temp])
+                lst.append([temp, previ, str(previ - temp)])
                 temp = 0
             previ = i
         df2 = pd.DataFrame(lst)
