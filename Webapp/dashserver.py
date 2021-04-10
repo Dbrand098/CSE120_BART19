@@ -1,7 +1,7 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from dash_extensions import Download
 from dash_extensions.snippets import send_data_frame
 import plotly.express as px
@@ -73,10 +73,14 @@ result.loc[(result["TempValue"] > 3+result["AmbientTemp"]), "Tag3"] = "Cell Temp
 #result.loc[(result["TempValue"] > 3+ result["TempValuetest"]), "Tag5"] = "orange"
 result.loc[(result["TempValue"] > 25), "Tag5"] = "Cell Temp > 25"
 
+#setting up locs for map
+locs = pd.read_csv("Locs.csv")
+
 #highlight boxes
 #outlier for graphs above 25
 #alerts status bubble
-
+#for map graph color will be based off of alerts and can have a DSM for each alert ez
+#discrete color map (can use to determine error bubble)
 #prob make a two page app
 #be based off of most recent errors
 #be based off of latest time and severity of errors
@@ -97,13 +101,54 @@ def getdb(conn,cur):
 
 df = getdb(conn,cur)
 
+fig = px.scatter_mapbox(locs,
+        lat=locs['root__stations__station__gtfs_latitude'],
+        lon=locs['root__stations__station__gtfs_longitude'],
+        hover_name="root__stations__station__name",
+        mapbox_style="open-street-map",
+        height = 1000
+        )
+fig.update_traces(marker=dict(size=9))
+fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0}, uirevision=True)
+
 app = dash.Dash(__name__, prevent_initial_callbacks=True)
 
 app.layout = html.Div([
+    dcc.Location(id='url', refresh=False),
+    html.Div(id='page-content')
+])
+
+statemap = html.Div([
     html.Div(
-    children=[html.H2("Bart Battery Viewer")],
+    children=[html.H2("Bart Station Map and Status")],
     style=dict(display='flex', justifyContent='center')
     ),
+    dcc.Graph(id="mapgraph",
+    figure = fig,
+    ),
+    dcc.Interval(
+        id='interval-component',
+        interval=5*1000, # in milliseconds
+        n_intervals=0
+    )
+])
+@app.callback(Output('mapgraph', 'figure'),
+              [Input('interval-component', 'n_intervals')])
+def update_output1(n_interval):
+    fig.update_traces(marker=dict(color='DarkSlateGrey')),
+    return fig
+@app.callback(Output('url', 'pathname'),
+              Input('mapgraph', 'clickData'))
+def display_page(statdclick):
+        return f"/locviewer"
+        
+locviewer = html.Div([
+    html.Div(
+    children=[html.H2("Bart Battery Location Viewer")],
+    style=dict(display='flex', justifyContent='center')
+    ),
+    html.Br(),
+    dcc.Link('Go back to Map', href='/map'),
     html.Div(className = "row", children=[
         html.Div(className="four columns", children=[
             html.Label(['Locations:'], style={'font-weight': 'bold', "text-align": "center"}),
@@ -123,9 +168,6 @@ app.layout = html.Div([
             id = 'Tags', 
             options=[{'label': i, 'value': i} for i in ["Tag1", "Tag2", "Tag3", "Tag4", "Tag5"]]),   
         ],style=dict(width='33.33%')),
-        #dcc.Dropdown(
-        #    id = 'cell', 
-        #    options=df.CellNo.unique()),
     ],style=dict(display='flex')),
     html.Div(children=[
     html.Label(['Cell Range:'], style={'font-weight': 'bold', "text-align": "center"}),
@@ -273,4 +315,13 @@ def generate_csv(Locname):
         col = [{"name": i, "id": i} for i in list(df2.columns)]
         return df2.to_dict('records'), col
     return [],[]
-app.run_server(debug=False)
+
+# return page
+@app.callback(dash.dependencies.Output('page-content', 'children'),
+              [dash.dependencies.Input('url', 'pathname')])
+def display_page(pathname):
+    if pathname == '/locviewer':
+        return locviewer
+    elif pathname == '/map':
+        return statemap
+app.run_server(debug=True)
