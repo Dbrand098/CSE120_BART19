@@ -62,16 +62,16 @@ result["Tag5"] = "clear"
 
 #though this looks repeatative it is ALOT faster than the for loop
 #tag number 1 30% deviation from set means (adjacent cells to this one need to be logged)
-result.loc[(result["ResistValue"] <= .70*result["ResistMean"]) | (result["ResistValue"] >= 1.3*result["ResistMean"]), "Tag1"] = "+-30% Resist"
+result.loc[(result["ResistValue"] <= .70*result["ResistMean"]) | (result["ResistValue"] >= 1.3*result["ResistMean"]), "Tag1"] = "red" #"+-30% Resist"
 #tag number 2 ambient temp > 30 (current none in our dataset)
-result.loc[(result["AmbientTemp"] > 30), "Tag2"] = "AmbT > 30"
+result.loc[(result["AmbientTemp"] > 30), "Tag2"] = "red" #"AmbT > 30"
 #tag number 3 cell > total temp + 3
-result.loc[(result["TempValue"] > 3+result["AmbientTemp"]), "Tag3"] = "Cell Temp > AmbT+3"
+result.loc[(result["TempValue"] > 3+result["AmbientTemp"]), "Tag3"] = "yellow" #"Cell Temp > AmbT+3"
 #tag 4 (idk what ripple current is yet)
 #result.at[i, "VoltValue"]/result.at[i, "ResistValue"] > .0005*result.at[i, "TotalCurrent"]:
 #tag 5
 #result.loc[(result["TempValue"] > 3+ result["TempValuetest"]), "Tag5"] = "orange"
-result.loc[(result["TempValue"] > 25), "Tag5"] = "Cell Temp > 25"
+result.loc[(result["TempValue"] > 25), "Tag5"] = "yellow" #"Cell Temp > 25"
 
 #setting up locs for map
 locs = pd.read_csv("Locs.csv")
@@ -108,7 +108,7 @@ fig = px.scatter_mapbox(locs,
         mapbox_style="open-street-map",
         height = 1000
         )
-fig.update_traces(marker=dict(size=9))
+fig.update_traces(marker=dict(size=20))
 fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0}, uirevision=True)
 
 app = dash.Dash(__name__, prevent_initial_callbacks=True)
@@ -135,7 +135,40 @@ statemap = html.Div([
 @app.callback(Output('mapgraph', 'figure'),
               [Input('interval-component', 'n_intervals')])
 def update_output1(n_interval):
-    fig.update_traces(marker=dict(color='DarkSlateGrey')),
+    result = getdb(conn,cur)
+    locs = pd.read_csv("Locs.csv")
+
+    test = result.loc[result.groupby(["Location"])["KeyTime"].idxmax()]
+    test2 = result[result["KeyTime"].isin(test["KeyTime"])]
+    test3 = test2[test2.apply(lambda x: 'red' in x.values, axis=1)]
+
+    test2 = test2[~test2["Location"].isin(test3["Location"])]
+    test4 = test2[test2.apply(lambda x: 'yellow' in x.values and "red" not in x.values, axis=1)]
+
+    test2 = test2[~test2["Location"].isin(test4["Location"])]
+    test5 = test2[test2.apply(lambda x: 'clear' in x.values and "red" not in x.values and "yellow" not in x.values, axis=1)]
+    test6 = pd.concat([test4.groupby("Location").head(1), test3.groupby("Location").head(1),test5.groupby("Location").head(1)])
+
+    test6["color"] = "blue"
+    test6.loc[((test6["Tag3"] == "yellow") | (test6["Tag4"] == "yellow") | (test6["Tag5"] == "yellow")), "color"] = "yellow"
+    test6.loc[((test6["Tag1"] == "red") | (test6["Tag1"] == "red")), "color"] = "red"
+    locs = locs.rename(columns={"root__stations__station__name": "Location"})
+    test7 = pd.merge(test6[["Location", "color"]],locs, on="Location")
+
+    fig = px.scatter_mapbox(test7,
+        lat=test7['root__stations__station__gtfs_latitude'],
+        lon=test7['root__stations__station__gtfs_longitude'],
+        hover_name="Location",
+        mapbox_style="open-street-map",
+        color="color",
+        height = 1000,
+        color_discrete_map={
+            "blue": "blue",
+            "red": "red",
+            "yellow":"yellow",}
+        )
+    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0}, uirevision=True)    
+    fig.update_traces(marker=dict(size=20)),
     return fig
 @app.callback(Output('url', 'pathname'),
               Input('mapgraph', 'clickData'))
@@ -322,6 +355,6 @@ def generate_csv(Locname):
 def display_page(pathname):
     if pathname == '/locviewer':
         return locviewer
-    elif pathname == '/map':
+    else:
         return statemap
-app.run_server(debug=True)
+app.run_server(debug=False)

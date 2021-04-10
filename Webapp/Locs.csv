@@ -1,51 +1,51 @@
-﻿"?xml__@version","?xml__@encoding","root__uri__#cdata-section","root__stations__station__name","root__stations__station__abbr","root__stations__station__gtfs_latitude","root__stations__station__gtfs_longitude","root__stations__station__address","root__stations__station__city","root__stations__station__county","root__stations__station__state","root__stations__station__zipcode","root__message"
-"1.0","utf-8","http://api.bart.gov/api/stn.aspx?cmd=stns&json=y","12th St. Oakland City Center","12TH","37.803768","-122.271450","1245 Broadway","Oakland","alameda","CA","94612",""
-"","","","16th St. Mission","16TH","37.765062","-122.419694","2000 Mission Street","San Francisco","sanfrancisco","CA","94110",""
-"","","","19th St. Oakland","19TH","37.808350","-122.268602","1900 Broadway","Oakland","alameda","CA","94612",""
-"","","","24th St. Mission","24TH","37.752470","-122.418143","2800 Mission Street","San Francisco","sanfrancisco","CA","94110",""
-"","","","Antioch","ANTC","37.995388","-121.780420","1600 Slatten Ranch Road","Antioch","Contra Costa","CA","94509",""
-"","","","Ashby","ASHB","37.852803","-122.270062","3100 Adeline Street","Berkeley","alameda","CA","94703",""
-"","","","Balboa Park","BALB","37.721585","-122.447506","401 Geneva Avenue","San Francisco","sanfrancisco","CA","94112",""
-"","","","Bay Fair","BAYF","37.696924","-122.126514","15242 Hesperian Blvd.","San Leandro","alameda","CA","94578",""
-"","","","Berryessa/North San Jose","BERY","37.368473","-121.874681","1620 Berryessa Road","San Jose","Santa Clara","CA","95133",""
-"","","","Castro Valley","CAST","37.690746","-122.075602","3301 Norbridge Dr.","Castro Valley","alameda","CA","94546",""
-"","","","Civic Center/UN Plaza","CIVC","37.779732","-122.414123","1150 Market Street","San Francisco","sanfrancisco","CA","94102",""
-"","","","Coliseum","COLS","37.753661","-122.196869","7200 San Leandro St.","Oakland","alameda","CA","94621",""
-"","","","Colma","COLM","37.684638","-122.466233","365 D Street","Colma","sanmateo","CA","94014",""
-"","","","Concord","CONC","37.973737","-122.029095","1451 Oakland Avenue","Concord","contracosta","CA","94520",""
-"","","","Daly City","DALY","37.706121","-122.469081","500 John Daly Blvd.","Daly City","sanmateo","CA","94014",""
-"","","","Downtown Berkeley","DBRK","37.870104","-122.268133","2160 Shattuck Avenue","Berkeley","alameda","CA","94704",""
-"","","","Dublin/Pleasanton","DUBL","37.701687","-121.899179","5801 Owens Dr.","Pleasanton","alameda","CA","94588",""
-"","","","El Cerrito del Norte","DELN","37.925086","-122.316794","6400 Cutting Blvd.","El Cerrito","contracosta","CA","94530",""
-"","","","El Cerrito Plaza","PLZA","37.902632","-122.298904","6699 Fairmount Avenue","El Cerrito","contracosta","CA","94530",""
-"","","","Embarcadero","EMBR","37.792874","-122.397020","298 Market Street","San Francisco","sanfrancisco","CA","94111",""
-"","","","Fremont","FRMT","37.557465","-121.976608","2000 BART Way","Fremont","alameda","CA","94536",""
-"","","","Fruitvale","FTVL","37.774836","-122.224175","3401 East 12th Street","Oakland","alameda","CA","94601",""
-"","","","Glen Park","GLEN","37.733064","-122.433817","2901 Diamond Street","San Francisco","sanfrancisco","CA","94131",""
-"","","","Hayward","HAYW","37.669723","-122.087018","699 'B' Street","Hayward","alameda","CA","94541",""
-"","","","Lafayette","LAFY","37.893176","-122.124630","3601 Deer Hill Road","Lafayette","contracosta","CA","94549",""
-"","","","Lake Merritt","LAKE","37.797027","-122.265180","800 Madison Street","Oakland","alameda","CA","94607",""
-"","","","MacArthur","MCAR","37.829065","-122.267040","555 40th Street","Oakland","alameda","CA","94609",""
-"","","","Millbrae","MLBR","37.600271","-122.386702","200 North Rollins Road","Millbrae","sanmateo","CA","94030",""
-"","","","Milpitas","MLPT","37.410277","-121.891081","1755 S. Milpitas Blvd.","Milpitas","Santa Clara","CA","94566",""
-"","","","Montgomery St.","MONT","37.789405","-122.401066","598 Market Street","San Francisco","sanfrancisco","CA","94104",""
-"","","","North Berkeley","NBRK","37.873967","-122.283440","1750 Sacramento Street","Berkeley","alameda","CA","94702",""
-"","","","North Concord/Martinez","NCON","38.003193","-122.024653","3700 Port Chicago Highway","Concord","contracosta","CA","94520",""
-"","","","Oakland International Airport","OAKL","37.713238","-122.212191","4 Airport Drive","Oakland","alameda","CA","94621",""
-"","","","Orinda","ORIN","37.878361","-122.183791","11 Camino Pablo","Orinda","contracosta","CA","94563",""
-"","","","Pittsburg/Bay Point","PITT","38.018914","-121.945154","1700 West Leland Road","Pittsburg","contracosta","CA","94565",""
-"","","","Pittsburg Center","PCTR","38.016941","-121.889457","2099 Railroad Avenue","Pittsburg","Contra Costa","CA","94565",""
-"","","","Pleasant Hill/Contra Costa Centre","PHIL","37.928468","-122.056012","1365 Treat Blvd.","Walnut Creek","contracosta","CA","94597",""
-"","","","Powell St.","POWL","37.784471","-122.407974","899 Market Street","San Francisco","sanfrancisco","CA","94102",""
-"","","","Richmond","RICH","37.936853","-122.353099","1700 Nevin Avenue","Richmond","contracosta","CA","94801",""
-"","","","Rockridge","ROCK","37.844702","-122.251371","5660 College Avenue","Oakland","alameda","CA","94618",""
-"","","","San Bruno","SBRN","37.637761","-122.416287","1151 Huntington Avenue","San Bruno","sanmateo","CA","94066",""
-"","","","San Francisco International Airport","SFIA","37.615966","-122.392409","International Terminal, Level 3","San Francisco Int'l Airport","sanmateo","CA","94128",""
-"","","","San Leandro","SANL","37.721947","-122.160844","1401 San Leandro Blvd.","San Leandro","alameda","CA","94577",""
-"","","","South Hayward","SHAY","37.634375","-122.057189","28601 Dixon Street","Hayward","alameda","CA","94544",""
-"","","","South San Francisco","SSAN","37.664245","-122.443960","1333 Mission Road","South San Francisco","sanmateo","CA","94080",""
-"","","","Union City","UCTY","37.590630","-122.017388","10 Union Square","Union City","alameda","CA","94587",""
-"","","","Walnut Creek","WCRK","37.905522","-122.067527","200 Ygnacio Valley Road","Walnut Creek","contracosta","CA","94596",""
-"","","","Warm Springs/South Fremont","WARM","37.502171","-121.939313","45193 Warm Springs Blvd","Fremont","alameda","CA","94539",""
-"","","","West Dublin/Pleasanton","WDUB","37.699756","-121.928240","6501 Golden Gate Drive","Dublin","alameda","CA","94568",""
-"","","","West Oakland","WOAK","37.804872","-122.295140","1451 7th Street","Oakland","alameda","CA","94607",""
+?xml__@version,?xml__@encoding,root__uri__#cdata-section,root__stations__station__name,root__stations__station__abbr,root__stations__station__gtfs_latitude,root__stations__station__gtfs_longitude,root__stations__station__address,root__stations__station__city,root__stations__station__county,root__stations__station__state,root__stations__station__zipcode,root__message
+1,utf-8,http://api.bart.gov/api/stn.aspx?cmd=stns&json=y,12th St. Oakland City Center,12TH,37.803768,-122.27145,1245 Broadway,Oakland,alameda,CA,94612,
+,,,16th St. Mission,16TH,37.765062,-122.419694,2000 Mission Street,San Francisco,sanfrancisco,CA,94110,
+,,,19th St. Oakland,19TH,37.80835,-122.268602,1900 Broadway,Oakland,alameda,CA,94612,
+,,,24th Street Station,24TH,37.75247,-122.418143,2800 Mission Street,San Francisco,sanfrancisco,CA,94110,
+,,,Antioch,ANTC,37.995388,-121.78042,1600 Slatten Ranch Road,Antioch,Contra Costa,CA,94509,
+,,,Ashby,ASHB,37.852803,-122.270062,3100 Adeline Street,Berkeley,alameda,CA,94703,
+,,,Balboa Park Station,BALB,37.721585,-122.447506,401 Geneva Avenue,San Francisco,sanfrancisco,CA,94112,
+,,,Bay Fair Station,BAYF,37.696924,-122.126514,15242 Hesperian Blvd.,San Leandro,alameda,CA,94578,
+,,,Berryessa/North San Jose,BERY,37.368473,-121.874681,1620 Berryessa Road,San Jose,Santa Clara,CA,95133,
+,,,Castro Valley,CAST,37.690746,-122.075602,3301 Norbridge Dr.,Castro Valley,alameda,CA,94546,
+,,,Civic Center Station,CIVC,37.779732,-122.414123,1150 Market Street,San Francisco,sanfrancisco,CA,94102,
+,,,Coliseum,COLS,37.753661,-122.196869,7200 San Leandro St.,Oakland,alameda,CA,94621,
+,,,Colma,COLM,37.684638,-122.466233,365 D Street,Colma,sanmateo,CA,94014,
+,,,Concord,CONC,37.973737,-122.029095,1451 Oakland Avenue,Concord,contracosta,CA,94520,
+,,,Daly City Station,DALY,37.706121,-122.469081,500 John Daly Blvd.,Daly City,sanmateo,CA,94014,
+,,,Downtown Berkeley,DBRK,37.870104,-122.268133,2160 Shattuck Avenue,Berkeley,alameda,CA,94704,
+,,,Dublin/Pleasanton,DUBL,37.701687,-121.899179,5801 Owens Dr.,Pleasanton,alameda,CA,94588,
+,,,El Cerrito del Norte,DELN,37.925086,-122.316794,6400 Cutting Blvd.,El Cerrito,contracosta,CA,94530,
+,,,El Cerrito Plaza,PLZA,37.902632,-122.298904,6699 Fairmount Avenue,El Cerrito,contracosta,CA,94530,
+,,,Embarcadero,EMBR,37.792874,-122.39702,298 Market Street,San Francisco,sanfrancisco,CA,94111,
+,,,Fremont,FRMT,37.557465,-121.976608,2000 BART Way,Fremont,alameda,CA,94536,
+,,,Fruitvale,FTVL,37.774836,-122.224175,3401 East 12th Street,Oakland,alameda,CA,94601,
+,,,Glen Park,GLEN,37.733064,-122.433817,2901 Diamond Street,San Francisco,sanfrancisco,CA,94131,
+,,,Hayward Yard,HAYW,37.669723,-122.087018,699 'B' Street,Hayward,alameda,CA,94541,
+,,,Lafayette Station,LAFY,37.893176,-122.12463,3601 Deer Hill Road,Lafayette,contracosta,CA,94549,
+,,,Lake Merritt Station,LAKE,37.797027,-122.26518,800 Madison Street,Oakland,alameda,CA,94607,
+,,,MacArthur Station,MCAR,37.829065,-122.26704,555 40th Street,Oakland,alameda,CA,94609,
+,,,Millbrae,MLBR,37.600271,-122.386702,200 North Rollins Road,Millbrae,sanmateo,CA,94030,
+,,,Milpitas,MLPT,37.410277,-121.891081,1755 S. Milpitas Blvd.,Milpitas,Santa Clara,CA,94566,
+,,,Montgomery St.,MONT,37.789405,-122.401066,598 Market Street,San Francisco,sanfrancisco,CA,94104,
+,,,North Berkeley,NBRK,37.873967,-122.28344,1750 Sacramento Street,Berkeley,alameda,CA,94702,
+,,,North Concord/Martinez,NCON,38.003193,-122.024653,3700 Port Chicago Highway,Concord,contracosta,CA,94520,
+,,,Oakland Transition Structure,OAKL,37.713238,-122.212191,4 Airport Drive,Oakland,alameda,CA,94621,
+,,,Orinda,ORIN,37.878361,-122.183791,11 Camino Pablo,Orinda,contracosta,CA,94563,
+,,,Pittsburg/Bay Point,PITT,38.018914,-121.945154,1700 West Leland Road,Pittsburg,contracosta,CA,94565,
+,,,Pittsburg Center,PCTR,38.016941,-121.889457,2099 Railroad Avenue,Pittsburg,Contra Costa,CA,94565,
+,,,Pleasant Hill/Contra Costa Centre,PHIL,37.928468,-122.056012,1365 Treat Blvd.,Walnut Creek,contracosta,CA,94597,
+,,,Powell St.,POWL,37.784471,-122.407974,899 Market Street,San Francisco,sanfrancisco,CA,94102,
+,,,Richmond Station,RICH,37.936853,-122.353099,1700 Nevin Avenue,Richmond,contracosta,CA,94801,
+,,,Rockridge,ROCK,37.844702,-122.251371,5660 College Avenue,Oakland,alameda,CA,94618,
+,,,San Bruno,SBRN,37.637761,-122.416287,1151 Huntington Avenue,San Bruno,sanmateo,CA,94066,
+,,,San Francisco International Airport,SFIA,37.615966,-122.392409,"International Terminal, Level 3",San Francisco Int'l Airport,sanmateo,CA,94128,
+,,,San Leandro,SANL,37.721947,-122.160844,1401 San Leandro Blvd.,San Leandro,alameda,CA,94577,
+,,,South Hayward Station,SHAY,37.634375,-122.057189,28601 Dixon Street,Hayward,alameda,CA,94544,
+,,,South San Francisco,SSAN,37.664245,-122.44396,1333 Mission Road,South San Francisco,sanmateo,CA,94080,
+,,,Union City,UCTY,37.59063,-122.017388,10 Union Square,Union City,alameda,CA,94587,
+,,,Walnut Creek Station,WCRK,37.905522,-122.067527,200 Ygnacio Valley Road,Walnut Creek,contracosta,CA,94596,
+,,,Warm Springs/South Fremont,WARM,37.502171,-121.939313,45193 Warm Springs Blvd,Fremont,alameda,CA,94539,
+,,,West Dublin/Pleasanton,WDUB,37.699756,-121.92824,6501 Golden Gate Drive,Dublin,alameda,CA,94568,
+,,,West Oakland,WOAK,37.804872,-122.29514,1451 7th Street,Oakland,alameda,CA,94607,
