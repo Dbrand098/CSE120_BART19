@@ -54,28 +54,33 @@ df3=df3.rename(columns = {'TempValue':'TempValuetest'})
 result = df1.merge(df2[["Location", "CellNo","ResistMean"]],on=["Location","CellNo"]).merge(df3[["KeyTime","Location","TempValuetest"]],on=["KeyTime","Location"])
 
 #all normal tags are blue, I separated all different tags into columns to avoid stacking errors (this could be useful?)
-result["Tag1"] = "blue"
-result["Tag2"] = "blue"
-result["Tag3"] = "blue"
-result["Tag4"] = "blue"
-result["Tag5"] = "blue"
+result["Tag1"] = "clear"
+result["Tag2"] = "clear"
+result["Tag3"] = "clear"
+result["Tag4"] = "clear"
+result["Tag5"] = "clear"
 
 #though this looks repeatative it is ALOT faster than the for loop
 #tag number 1 30% deviation from set means (adjacent cells to this one need to be logged)
-result.loc[(result["ResistValue"] <= .70*result["ResistMean"]) | (result["ResistValue"] >= 1.3*result["ResistMean"]), "Tag1"] = "red"
+result.loc[(result["ResistValue"] <= .70*result["ResistMean"]) | (result["ResistValue"] >= 1.3*result["ResistMean"]), "Tag1"] = "+-30% Resist"
 #tag number 2 ambient temp > 30 (current none in our dataset)
-result.loc[(result["AmbientTemp"] > 30), "Tag2"] = "red"
+result.loc[(result["AmbientTemp"] > 30), "Tag2"] = "AmbT > 30"
 #tag number 3 cell > total temp + 3
-result.loc[(result["TempValue"] > 3+result["AmbientTemp"]), "Tag3"] = "yellow"
+result.loc[(result["TempValue"] > 3+result["AmbientTemp"]), "Tag3"] = "Cell Temp > AmbT+3"
 #tag 4 (idk what ripple current is yet)
 #result.at[i, "VoltValue"]/result.at[i, "ResistValue"] > .0005*result.at[i, "TotalCurrent"]:
 #tag 5
-result.loc[(result["TempValue"] > 3+ result["TempValuetest"]), "Tag5"] = "orange"
+#result.loc[(result["TempValue"] > 3+ result["TempValuetest"]), "Tag5"] = "orange"
+result.loc[(result["TempValue"] > 25), "Tag5"] = "Cell Temp > 25"
 
-#put this in separate table
-#track ambient temp over 25 by how much and for how long
-    #each time something is over 25, how long is it over 25
-#gaps are not expected
+#highlight boxes
+#outlier for graphs above 25
+#alerts status bubble
+
+#prob make a two page app
+#be based off of most recent errors
+#be based off of latest time and severity of errors
+#first page is all locs second page is a redirect
 
 #structure for iterating through dataframe with for loop (alot slower runtime)
 #for i in result.index:
@@ -186,7 +191,7 @@ def updateTable(Locname, Tag):
         df = getdb(conn,cur) 
         #might wanna change to contains
         #prob limit more columns for visability
-        df = df[(df["Location"] == Locname) & (df[Tag] != "blue")]
+        df = df[(df["Location"] == Locname) & (df[Tag] != "clear")]
         col = [{"name": i, "id": i} for i in list(df.columns)]
         return df.to_dict('records'), col
     return [],[]
@@ -210,7 +215,9 @@ def update_graph(Locname, yaxisname, Tag, srange):
             gheight = 300
         else:
             gheight = 30*(srange[1]-srange[0])
-        fig = px.scatter(df, x="KeyTime", y=yaxisname, color=Tag, facet_col="CellNo",facet_col_wrap=wrap, height=gheight)
+        fig = px.scatter(df, x="KeyTime", y=yaxisname, color=Tag, facet_col="CellNo",facet_col_wrap=wrap, height=gheight,
+                    color_discrete_map={
+                        "clear": "blue"})
         fig.update_yaxes(matches=None, showticklabels=True)
     return fig
 
@@ -266,4 +273,4 @@ def generate_csv(Locname):
         col = [{"name": i, "id": i} for i in list(df2.columns)]
         return df2.to_dict('records'), col
     return [],[]
-app.run_server(debug=True)
+app.run_server(debug=False)
