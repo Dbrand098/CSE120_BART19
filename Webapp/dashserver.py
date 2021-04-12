@@ -27,17 +27,22 @@ except mariadb.Error as e:
     print(f"Error connecting to MariaDB Platform: {e}")
     sys.exit(1)
 
-# Get Cursor
+# Get Cursor not used
 cur = conn.cursor()
 
 #moved to outside to mimic actual backend (cant set up until we have packets)
 query = """select history.cells.KeyTime, Location, CellNo, VoltValue, ResistValue, TempValue, TotalVolt, TotalCurrent, AmbientTemp from history.cells, info.bankinfo, history.bankdata 
         where history.bankdata.BankId = info.bankinfo.BankId and history.bankdata.KeyTime = history.cells.KeyTime and info.bankinfo.BankId = history.cells.BankId order by Location"""
 
+#used for battery life (parameterizing this is actually slower)
 query2 = """select history.bankdata.KeyTime, Location, AmbientTemp from info.bankinfo, history.bankdata 
         where history.bankdata.BankId = info.bankinfo.BankId"""
-ambientdataframe = pd.read_sql_query(query2, conn)
-ambientdataframe.set_index('KeyTime', inplace=True)
+
+#used for map with live data (will also include the colors)
+query3 = """select history.cells.KeyTime, Location from history.cells, info.bankinfo 
+        where info.bankinfo.BankId = history.cells.BankId and KeyTime in (select max(KeyTime) from history.cells, info.bankinfo 
+                                                                            where info.bankinfo.BankId = history.cells.BankId group by Location)"""
+                                                                            
 
 df1 = pd.read_sql_query(query, conn)
 
@@ -54,37 +59,33 @@ df3=df3.rename(columns = {'TempValue':'TempValuetest'})
 result = df1.merge(df2[["Location", "CellNo","ResistMean"]],on=["Location","CellNo"]).merge(df3[["KeyTime","Location","TempValuetest"]],on=["KeyTime","Location"])
 
 #all normal tags are blue, I separated all different tags into columns to avoid stacking errors (this could be useful?)
-result["Tag1"] = "clear"
-result["Tag2"] = "clear"
-result["Tag3"] = "clear"
-result["Tag4"] = "clear"
-result["Tag5"] = "clear"
+#ease of changing tagnames
+tagnames = ["+-30% Resist", "AmbT > 30", "Cell Temp > AmbT+3", "Tag4", "Cell Temp > 25"]
+
+result[tagnames[0]] = "clear"
+result[tagnames[1]] = "clear"
+result[tagnames[2]] = "clear"
+result[tagnames[3]] = "clear"
+result[tagnames[4]] = "clear"
 
 #though this looks repeatative it is ALOT faster than the for loop
 #tag number 1 30% deviation from set means (adjacent cells to this one need to be logged)
-result.loc[(result["ResistValue"] <= .70*result["ResistMean"]) | (result["ResistValue"] >= 1.3*result["ResistMean"]), "Tag1"] = "red" #"+-30% Resist"
+result.loc[(result["ResistValue"] <= .70*result["ResistMean"]) | (result["ResistValue"] >= 1.3*result["ResistMean"]), tagnames[0]] = "High Alert" #"+-30% Resist"
 #tag number 2 ambient temp > 30 (current none in our dataset)
-result.loc[(result["AmbientTemp"] > 30), "Tag2"] = "red" #"AmbT > 30"
+result.loc[(result["AmbientTemp"] > 30), tagnames[1]] = "High Alert" #"AmbT > 30"
 #tag number 3 cell > total temp + 3
-result.loc[(result["TempValue"] > 3+result["AmbientTemp"]), "Tag3"] = "yellow" #"Cell Temp > AmbT+3"
+result.loc[(result["TempValue"] > 3+result["AmbientTemp"]), tagnames[2]] = "Medium Alert" #"Cell Temp > AmbT+3"
 #tag 4 (idk what ripple current is yet)
 #result.at[i, "VoltValue"]/result.at[i, "ResistValue"] > .0005*result.at[i, "TotalCurrent"]:
 #tag 5
 #result.loc[(result["TempValue"] > 3+ result["TempValuetest"]), "Tag5"] = "orange"
-result.loc[(result["TempValue"] > 25), "Tag5"] = "yellow" #"Cell Temp > 25"
+result.loc[(result["TempValue"] > 25), tagnames[4]] = "Medium Alert" #"Cell Temp > 25"
 
 #setting up locs for map
 locs = pd.read_csv("Locs.csv")
 
-#highlight boxes
-#outlier for graphs above 25
-#alerts status bubble
-#for map graph color will be based off of alerts and can have a DSM for each alert ez
-#discrete color map (can use to determine error bubble)
-#prob make a two page app
-#be based off of most recent errors
-#be based off of latest time and severity of errors
-#first page is all locs second page is a redirect
+#highlight boxes (maybe?)
+#outlier for graphs above 25 
 
 #structure for iterating through dataframe with for loop (alot slower runtime)
 #for i in result.index:
@@ -95,23 +96,14 @@ locs = pd.read_csv("Locs.csv")
 #    #if result.at[i, "VoltValue"]/result.at[i, "ResistValue"] > .0005*result.at[i, "TotalCurrent"]:
 #    #    result.at[i, 'Tag'] = "orange"
 
+#will prob be deleted bc can just use pd read for querys we'll see tho
 def getdb(conn,cur):
     #this will simply return the a query of a db (made to better mimic an actual system when we have the packets and a separate backend) 
     return result
 
 df = getdb(conn,cur)
 
-fig = px.scatter_mapbox(locs,
-        lat=locs['root__stations__station__gtfs_latitude'],
-        lon=locs['root__stations__station__gtfs_longitude'],
-        hover_name="root__stations__station__name",
-        mapbox_style="open-street-map",
-        height = 1000
-        )
-fig.update_traces(marker=dict(size=20))
-fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0}, uirevision=True)
-
-app = dash.Dash(__name__, prevent_initial_callbacks=True)
+app = dash.Dash(__name__, prevent_initial_callbacks=False)
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
@@ -124,7 +116,6 @@ statemap = html.Div([
     style=dict(display='flex', justifyContent='center')
     ),
     dcc.Graph(id="mapgraph",
-    figure = fig,
     ),
     dcc.Interval(
         id='interval-component',
@@ -137,21 +128,23 @@ statemap = html.Div([
 def update_output1(n_interval):
     result = getdb(conn,cur)
     locs = pd.read_csv("Locs.csv")
+    #fiesta code
 
+    #this part will be replaced by query3 when have live data
     test = result.loc[result.groupby(["Location"])["KeyTime"].idxmax()]
     test2 = result[result["KeyTime"].isin(test["KeyTime"])]
-    test3 = test2[test2.apply(lambda x: 'red' in x.values, axis=1)]
+
+    test3 = test2[test2.apply(lambda x: 'High Alert' in x.values, axis=1)]
 
     test2 = test2[~test2["Location"].isin(test3["Location"])]
-    test4 = test2[test2.apply(lambda x: 'yellow' in x.values and "red" not in x.values, axis=1)]
+    test4 = test2[test2.apply(lambda x: 'Medium Alert' in x.values and "High Alert" not in x.values, axis=1)]
 
     test2 = test2[~test2["Location"].isin(test4["Location"])]
-    test5 = test2[test2.apply(lambda x: 'clear' in x.values and "red" not in x.values and "yellow" not in x.values, axis=1)]
+    test5 = test2[test2.apply(lambda x: 'clear' in x.values and "High Alert" not in x.values and "Medium Alert" not in x.values, axis=1)]
     test6 = pd.concat([test4.groupby("Location").head(1), test3.groupby("Location").head(1),test5.groupby("Location").head(1)])
 
-    test6["color"] = "blue"
-    test6.loc[((test6["Tag3"] == "yellow") | (test6["Tag4"] == "yellow") | (test6["Tag5"] == "yellow")), "color"] = "yellow"
-    test6.loc[((test6["Tag1"] == "red") | (test6["Tag1"] == "red")), "color"] = "red"
+    test6["color"] =  test6.apply(lambda x: "High Alert" if 'High Alert' in x.values else ('Medium Alert' if "Medium Alert" in x.values else "clear"), axis=1)
+
     locs = locs.rename(columns={"root__stations__station__name": "Location"})
     test7 = pd.merge(test6[["Location", "color"]],locs, on="Location")
 
@@ -163,9 +156,9 @@ def update_output1(n_interval):
         color="color",
         height = 1000,
         color_discrete_map={
-            "blue": "blue",
-            "red": "red",
-            "yellow":"yellow",}
+            "clear": "blue",
+            "High Alert": "red",
+            "Medium Alert":"yellow",}
         )
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0}, uirevision=True)    
     fig.update_traces(marker=dict(size=20)),
@@ -199,7 +192,7 @@ locviewer = html.Div([
             html.Label(['Error Type:'], style={'font-weight': 'bold', "text-align": "center"}),
             dcc.Dropdown(
             id = 'Tags', 
-            options=[{'label': i, 'value': i} for i in ["Tag1", "Tag2", "Tag3", "Tag4", "Tag5"]]),   
+            options=[{'label': i, 'value': i} for i in tagnames]),   
         ],style=dict(width='33.33%')),
     ],style=dict(display='flex')),
     html.Div(children=[
@@ -254,14 +247,20 @@ locviewer = html.Div([
         style_data={ 'border': '1px solid grey' },
         virtualization=True,
     ),
+    dcc.Interval(
+        id='interval-component2',
+        interval=5*1000, # in milliseconds
+        n_intervals=0
+    ),
 ])
 
 @app.callback(
     [Output('table', 'data'),
     Output('table','columns')],
     [Input('Loc', 'value'),
-    Input('Tags', 'value')])
-def updateTable(Locname, Tag):
+    Input('Tags', 'value'),
+    Input('interval-component2', 'n_intervals')])
+def updateTable(Locname, Tag, nint):
     if Locname is not None and Tag is not None:
         df = getdb(conn,cur) 
         #might wanna change to contains
@@ -276,8 +275,9 @@ def updateTable(Locname, Tag):
     [Input("Loc", "value"),
     Input("yaxis", "value"),
     Input('Tags', 'value'),
-    Input('rangeslider', 'value')])
-def update_graph(Locname, yaxisname, Tag, srange):
+    Input('rangeslider', 'value'),
+    Input('interval-component2', 'n_intervals')])
+def update_graph(Locname, yaxisname, Tag, srange, nint):
     #im like 60% sure this is causing some errors (webpage randomly refreshes) I may have fixed it tho
     fig = go.Figure()
     if Locname is not None and yaxisname is not None is not Tag is not None and srange is not None:
@@ -294,6 +294,7 @@ def update_graph(Locname, yaxisname, Tag, srange):
                     color_discrete_map={
                         "clear": "blue"})
         fig.update_yaxes(matches=None, showticklabels=True)
+        fig.update_layout(uirevision=True)
     return fig
 
 @app.callback(Output("download", "data"), 
@@ -328,9 +329,12 @@ def update_output(value):
 @app.callback(
     [Output('tablel', 'data'),
     Output('tablel','columns')],
-    [Input("Loc", "value"),])
-def generate_csv(Locname):
+    [Input("Loc", "value"),
+    Input('interval-component2', 'n_intervals')])
+def generate_csv(Locname, nint):
     if Locname is not None:
+        ambientdataframe = pd.read_sql_query(query2, conn)
+        ambientdataframe.set_index('KeyTime', inplace=True)
         df2 = ambientdataframe[ambientdataframe["Location"] == Locname]
 
         temp = 0
