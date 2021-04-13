@@ -165,7 +165,7 @@ def update_output1(n_interval):
     return fig
 @app.callback(Output('url', 'pathname'),
               Input('mapgraph', 'clickData'))
-def display_page(statdclick):
+def mapclick(statdclick):
         return f"/locviewer"
         
 locviewer = html.Div([
@@ -207,22 +207,24 @@ locviewer = html.Div([
     html.Div(children=[
         html.Div(
         children=[
-        html.Label(['Select Data Range to Download:'], style={'font-weight': 'bold', "text-align": "center"}),
-        dcc.DatePickerRange(
-        id = 'Time',
-        display_format='M-D-Y',
-        start_date_placeholder_text="Start Date",
-        end_date_placeholder_text="End Date",
-        minimum_nights=0,
+        html.Label(['Select Data Time to Download:'], style={'font-weight': 'bold', "text-align": "center"}),
+        #prob delete this and go back to the dropdown menu
+        #dcc.DatePickerRange(
+        #id = 'Time',
+        #display_format='M-D-Y',
+        #start_date_placeholder_text="Start Date",
+        #end_date_placeholder_text="End Date",
+        #minimum_nights=0,
         #has to update with n intervals
-        min_date_allowed=df.KeyTime.min(),
-        max_date_allowed=df.KeyTime.max(),
-        clearable=True,
-        ),
-        #can use this or the date range (ask mentors next meeting)
+        #min_date_allowed=df.KeyTime.min(),
+        #max_date_allowed=df.KeyTime.max(),
+        #clearable=True,
+        #),
+        #this dropdown needs to update from Locations DR
         dcc.Dropdown(
             id = 'times', 
-            options=[{'label': i, 'value': i} for i in df.KeyTime.dt.date.unique()]),
+            #options=[{'label': i, 'value': i} for i in df.KeyTime.dt.strftime('%B %d, %Y, %r').unique()]
+            ),
         ],
         style=dict(width='50%')
         ),
@@ -253,6 +255,11 @@ locviewer = html.Div([
         n_intervals=0
     ),
 ])
+@app.callback(Output('Loc', 'options'),
+              [Input('interval-component2', 'n_intervals')])
+def update_timedrop(nint):
+    df = getdb(conn,cur)
+    return [{'label': i, 'value': i} for i in df.Location.unique()]
 
 @app.callback(
     [Output('table', 'data'),
@@ -278,7 +285,6 @@ def updateTable(Locname, Tag, nint):
     Input('rangeslider', 'value'),
     Input('interval-component2', 'n_intervals')])
 def update_graph(Locname, yaxisname, Tag, srange, nint):
-    #im like 60% sure this is causing some errors (webpage randomly refreshes) I may have fixed it tho
     fig = go.Figure()
     if Locname is not None and yaxisname is not None is not Tag is not None and srange is not None:
         df = getdb(conn,cur)
@@ -295,23 +301,38 @@ def update_graph(Locname, yaxisname, Tag, srange, nint):
                         "clear": "blue"})
         fig.update_yaxes(matches=None, showticklabels=True)
         fig.update_layout(uirevision=True)
+        #this adds the line but also an extreme amount of lag so prob avoid
+        #if yaxisname == "TempValue":
+        #    fig.add_shape(type="line", x0=df.KeyTime.min(), y0=25, x1=df.KeyTime.max(),y1=25, row="all", col="all",exclude_empty_subplots=True)
     return fig
 
 @app.callback(Output("download", "data"), 
     [
     #Input("btn", "n_clicks_timestamp"), scrapping download button for now
-    Input('Time', 'start_date'),
-    Input('Time', 'end_date'),
+    Input("times", "value"),
+    #Input('Time', 'start_date'),
+    #Input('Time', 'end_date'),
     Input("Loc", "value"),
     ])
-def generate_csv(start, end, Locname):
-    if start is not None and end is not None and Locname is not None:
+def generate_csv(drtime, Locname):
+    if Locname is not None and drtime is not None:
         df = getdb(conn,cur)
-        df = df[(df["Location"] == Locname) & (df["KeyTime"] >= start) & (df["KeyTime"] <= end)]
+        print(drtime)
+        df = df[(df["Location"] == Locname) & (df["KeyTime"] == drtime)]
         #can do stuff  to dataframe here
         return send_data_frame(df.to_csv, filename="battdata.csv", index=False)
 
-@app.callback([Output('rangeslider', 'max')],
+@app.callback(Output('times', 'options'),
+              [Input('Loc', 'value'),
+              Input('interval-component2', 'n_intervals')])
+def update_timedrop(Locname, nint):
+    if Locname is not None:
+        df = getdb(conn,cur)
+        df = df[df["Location"] == Locname] 
+        return [{'label': i, 'value': i} for i in df.KeyTime.dt.strftime('%B %d, %Y, %r').unique()]
+    return [1]
+
+@app.callback(Output('rangeslider', 'max'),
               [Input('Loc', 'value')])
 def update_slider(Locname):
     if Locname is not None:
@@ -331,7 +352,7 @@ def update_output(value):
     Output('tablel','columns')],
     [Input("Loc", "value"),
     Input('interval-component2', 'n_intervals')])
-def generate_csv(Locname, nint):
+def ambientcall(Locname, nint):
     if Locname is not None:
         ambientdataframe = pd.read_sql_query(query2, conn)
         ambientdataframe.set_index('KeyTime', inplace=True)
