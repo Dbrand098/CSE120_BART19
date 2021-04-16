@@ -48,6 +48,7 @@ df1 = pd.read_sql_query(query, conn)
 
 #testmean.csv is our battery commisioning feature
 df2 = pd.read_csv("CurrentBaseline.csv")
+#make little script for new baseline
 #df2 = df.groupby(["Location", "CellNo"], as_index=False).mean() <- made by 6 month data using this call (then do df to csv)
 df2.columns = ["Location", "CellNo","VoltMean", "ResistMean", "TempMean"]
 
@@ -70,11 +71,11 @@ result[tagnames[4]] = "clear"
 
 #though this looks repeatative it is ALOT faster than the for loop
 #tag number 1 30% deviation from set means (adjacent cells to this one need to be logged)
-result.loc[(result["ResistValue"] <= .70*result["ResistMean"]) | (result["ResistValue"] >= 1.3*result["ResistMean"]), tagnames[0]] = "High Alert" #"+-30% Resist"
+result.loc[(result["ResistValue"] <= .70*result["ResistMean"]) | (result["ResistValue"] >= 1.3*result["ResistMean"]), tagnames[0]] = "Medium Alert" #"+-30% Resist"
 #tag number 2 ambient temp > 30 (current none in our dataset)
 result.loc[(result["AmbientTemp"] > 30), tagnames[1]] = "High Alert" #"AmbT > 30"
 #tag number 3 cell > total temp + 3
-result.loc[(result["TempValue"] > 3+result["AmbientTemp"]), tagnames[2]] = "Medium Alert" #"Cell Temp > AmbT+3"
+result.loc[(result["TempValue"] > 3+result["AmbientTemp"]), tagnames[2]] = "High Alert" #"Cell Temp > AmbT+3"
 #tag 4 (idk what ripple current is yet)
 #result.at[i, "VoltValue"]/result.at[i, "ResistValue"] > .0005*result.at[i, "TotalCurrent"]:
 #tag 5
@@ -84,8 +85,7 @@ result.loc[(result["TempValue"] > 25), tagnames[4]] = "Medium Alert" #"Cell Temp
 #setting up locs for map
 locs = pd.read_csv("Locs.csv")
 
-#highlight boxes (maybe?)
-#outlier for graphs above 25 
+#highlight boxes (maybe?) 
 
 #structure for iterating through dataframe with for loop (alot slower runtime)
 #for i in result.index:
@@ -146,12 +146,13 @@ def update_output1(n_interval):
     test6["color"] =  test6.apply(lambda x: "High Alert" if 'High Alert' in x.values else ('Medium Alert' if "Medium Alert" in x.values else "clear"), axis=1)
 
     locs = locs.rename(columns={"root__stations__station__name": "Location"})
-    test7 = pd.merge(test6[["Location", "color"]],locs, on="Location")
+    test7 = pd.merge(test6,locs, on="Location")
 
     fig = px.scatter_mapbox(test7,
         lat=test7['root__stations__station__gtfs_latitude'],
         lon=test7['root__stations__station__gtfs_longitude'],
         hover_name="Location",
+        hover_data=tagnames,
         mapbox_style="open-street-map",
         color="color",
         height = 1000,
