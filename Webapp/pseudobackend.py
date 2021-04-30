@@ -54,7 +54,7 @@ result = df1.merge(df2[["Location", "CellNo","ResistMean"]],on=["Location","Cell
 
 #all normal tags are blue, I separated all different tags into columns to avoid stacking errors (this could be useful?)
 #ease of changing tagnames
-tagnames = ["+-30% Resist", "AmbT > 30", "Cell Temp > AmbT+3", "Tag4", "Cell Temp > 25"]
+tagnames = ["+-30% Resist", "AmbT > 30", "Cell Temp > AmbT + 3", "Cell Temp > Temp avg + 3", "Cell Temp > 25"]
 
 result[tagnames[0]] = "clear"
 result[tagnames[1]] = "clear"
@@ -71,8 +71,8 @@ result.loc[(result["AmbientTemp"] > 30), tagnames[1]] = "High Alert" #"AmbT > 30
 result.loc[(result["TempValue"] > 3+result["AmbientTemp"]), tagnames[2]] = "High Alert" #"Cell Temp > AmbT+3"
 #tag 4 (idk what ripple current is yet)
 #result.at[i, "VoltValue"]/result.at[i, "ResistValue"] > .0005*result.at[i, "TotalCurrent"]:
+result.loc[(result["TempValue"] > 3+ result["TempValuetest"]), tagnames[4]] = "High Alert"
 #tag 5
-#result.loc[(result["TempValue"] > 3+ result["TempValuetest"]), "Tag5"] = "orange"
 result.loc[(result["TempValue"] > 25), tagnames[4]] = "Medium Alert" #"Cell Temp > 25"
 
 #setting up locs for map
@@ -104,7 +104,7 @@ ambientdataframe.to_sql("test2", con=conn, if_exists='append', index=False)
 
 def getdb(conn):
     #this will simply return the a query of a db (made to better mimic an actual system when we have the packets and a separate backend)
-    result = pd.read_sql_query("Select * FROM test where KeyTime > '2018-01-22'", conn)
+    result = pd.read_sql_query("Select * FROM test where KeyTime", conn)
     result["KeyTime"]=result.KeyTime.astype('datetime64[ns]')
     return result
 

@@ -19,7 +19,7 @@ import sys
 import sqlite3
 import time
 
-tagnames = ["+-30% Resist", "AmbT > 30", "Cell Temp > AmbT+3", "Tag4", "Cell Temp > 25"]
+tagnames = ["+-30% Resist", "AmbT > 30", "Cell Temp > AmbT + 3", "Cell Temp > Temp avg + 3", "Cell Temp > 25"]
 conn = sqlite3.connect("testdb.db", check_same_thread=False)
 
 def getdb(conn):
@@ -35,7 +35,7 @@ def getambient(conn):
 
 df = getdb(conn)
 
-app = dash.Dash(__name__, prevent_initial_callbacks=True)
+app = dash.Dash(__name__, prevent_initial_callbacks=False)
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
@@ -270,13 +270,16 @@ def update_timedrop(Locname, nint):
 @app.callback(Output('rangeslider', 'max'),
               Input('Loc', 'value'))
 def update_slider(Locname):
-    if Locname is not None:
-        df = pd.read_csv("currdf.csv")
-        df["KeyTime"]=df.KeyTime.astype('datetime64[ns]')
-        df = df[df["Location"] == Locname]
-        max = round(int(df["CellNo"].max()))
-        return max
-    return [0]
+    if Locname is not None and Locname == "Daly City Station":
+        #not really necessary to do this but can be changed back
+        #changed to help RT alittle
+        #df = pd.read_csv("currdf.csv")
+        #df["KeyTime"]=df.KeyTime.astype('datetime64[ns]')
+        #df = df[df["Location"] == Locname]
+        #max = round(int(df["CellNo"].max()))
+        #return max
+            return 180
+    return 60
 
 @app.callback(Output('range-slider-label', 'children'),
     [Input('rangeslider', 'value')])
