@@ -1,8 +1,5 @@
 import mariadb
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import datetime as dt
 import sys
 
 import os
@@ -76,20 +73,7 @@ result.loc[(result["TempValue"] > 3+ result["TempValuetest"]), tagnames[4]] = "H
 result.loc[(result["TempValue"] > 25), tagnames[4]] = "Medium Alert" #"Cell Temp > 25"
 
 #setting up locs for map
-locs = pd.read_csv("Locs.csv")
-
-#highlight boxes (maybe?) 
-
-#structure for iterating through dataframe with for loop (alot slower runtime)
-#for i in result.index:
-#    if result.at[i,"ResistValue"] <= .70*result.at[i,"ResistMean"] or result.at[i, "ResistValue"] >= 1.3*result.at[i, "ResistMean"]:
-#        result.at[i, 'Tag'] = "red"
-#    if result.at[i, "TempValue"] > result.at[i, "AmbientTemp"]+3:
-#        result.at[i, 'Tag'] = "yellow"
-#    #if result.at[i, "VoltValue"]/result.at[i, "ResistValue"] > .0005*result.at[i, "TotalCurrent"]:
-#    #    result.at[i, 'Tag'] = "orange"
-
-#will prob be deleted bc can just use pd read for querys we'll see tho
+#locs = pd.read_csv("Locs.csv")
 
 #this is made so the website can be constantly querying to check if works with live data
 ambientdataframe = pd.read_sql_query(query2, connn)
@@ -115,9 +99,9 @@ def getambient(conn):
     return ambientdataframe
 
 
-start = time.time()
-print(getdb(conn))
-end = time.time()
-print(end - start)
+#start = time.time()
+#print(getdb(conn))
+#end = time.time()
+#print(end - start)
 
 #print(getambient(conn))

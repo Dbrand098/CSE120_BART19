@@ -8,20 +8,20 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import dash_table
-from dash.exceptions import PreventUpdate
-
-import mariadb
+#from dash.exceptions import PreventUpdate
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import datetime as dt
-import sys
 import sqlite3
-import time
+#runs backend when frontend is run
+from pseudobackend import tagnames
 
-tagnames = ["+-30% Resist", "AmbT > 30", "Cell Temp > AmbT + 3", "Cell Temp > Temp avg + 3", "Cell Temp > 25"]
+#tagnames from backend
+tagnames = tagnames
+
+#connecting to local test db
 conn = sqlite3.connect("testdb.db", check_same_thread=False)
 
+#these are both the information queries
+#when the real backend is hooked the query section will change to atleast have a limit (max 160k tuples tested)
 def getdb(conn):
     result = pd.read_sql_query("Select * FROM test", conn)
     return result
@@ -31,24 +31,30 @@ def getambient(conn):
     ambientdataframe["KeyTime"]=ambientdataframe.KeyTime.astype('datetime64[ns]')
     return ambientdataframe
 
-#def readcsv(csv):
-
 df = getdb(conn)
 
 app = dash.Dash(__name__, prevent_initial_callbacks=False)
 
+#overall layout of the website, put global stuff here (ie the interval update)
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content'),
     dcc.Interval(
+        #this is the main interval update for the website
         id='interval-component',
         interval=5*1000, # in milliseconds
         n_intervals=0
     ),
+    #dcc store was experimented for a bit (storing the query in local or memeory as a json, but with large queries it did not really work)
     #dcc.Store(id='dfstore'),
     html.Div(id='hidden-div', style={'display':'none'}),
 ])
 
+#main update callback, every 5 seconds (based on interval comp) will create a new CSV based on getDB query
+#every time this happens it updates a hidden element which triggers a cascade update for all callbacks which have the hidden element as input (any callback which needs queried data)
+#this was done as opposed to set all on the update interval bc sometimes they intervals would clash on CSV creation and not have full data
+#if the query is small enough each callback that needs data can be changed to just query the local db
+#but with 160k elements this method allowed for the largest queries while the website still works
 @app.callback(Output('hidden-div', 'children'),
         Input('interval-component', 'n_intervals'))
 def update_df(nint):
@@ -56,6 +62,7 @@ def update_df(nint):
     df.to_csv("currdf.csv", index=False)
     return 0
 
+#1st page
 statemap = html.Div([
     html.Div(
     children=[html.H2("Bart Station Map and Status")],
@@ -63,11 +70,13 @@ statemap = html.Div([
     ),
     dcc.Graph(id="mapgraph"),
     #dcc.Interval(
+    #   this interval would only be used for map, but it is currently using main page update cascade
     #    id='interval-component2',
     #    interval=10*1000, # in milliseconds
     #    n_intervals=0
     #),
 ])
+#callback for updating status map
 @app.callback(Output('mapgraph', 'figure'),
             #Input('interval-component2', 'n_intervals'),
             Input('hidden-div', 'children')
@@ -75,12 +84,10 @@ statemap = html.Div([
            )
 def update_output1(nint):
     result = pd.read_csv("currdf.csv")
-    #result = pd.DataFrame(dfs)
-    #print(result)
     result["KeyTime"]=result.KeyTime.astype('datetime64[ns]')
 
     locs = pd.read_csv("Locs.csv")
-    #fiesta code
+    #fiesta code (this block of code filters down query to get current status per station)
     
     mostrecenttime = result.loc[result.groupby(["Location"])["KeyTime"].idxmax()]
     allmrts = result[result["KeyTime"].isin(mostrecenttime["KeyTime"])]
@@ -115,11 +122,14 @@ def update_output1(nint):
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0}, uirevision=True)    
     fig.update_traces(marker=dict(size=20)),
     return fig
+
+#callback for page redirect on mapclick
 @app.callback(Output('url', 'pathname'),
               Input('mapgraph', 'clickData'))
 def mapclick(statdclick):
         return f"/locviewer"
-        
+
+#2nd page  
 locviewer = html.Div([
     html.Div(
     children=[html.H2("Bart Battery Location Viewer")],
@@ -180,12 +190,14 @@ locviewer = html.Div([
         virtualization=True,
     ),
     dcc.Interval(
+        #only used in battery life interval
+        #all other interval updates on this page are based off of the main page layout (interval component)
         id='interval-component3',
         interval=10*1000, # in milliseconds
         n_intervals=0
     ),
 ])
-
+#callback for updating location dropdown
 @app.callback(Output('Loc', 'options'),
               #Input('interval-component3', 'n_intervals')
               Input('hidden-div', 'children')
@@ -195,6 +207,7 @@ def update_locdrop(nint):
     df["KeyTime"]=df.KeyTime.astype('datetime64[ns]')
     return [{'label': i, 'value': i} for i in df.Location.unique()]
 
+#callback for updating error table
 @app.callback(
     [Output('table', 'data'),
     Output('table','columns')],
@@ -207,13 +220,14 @@ def updateTable(Locname, Tag, nint):
     if Locname is not None and Tag is not None:
         df = pd.read_csv("currdf.csv")
         df["KeyTime"]=df.KeyTime.astype('datetime64[ns]')
-        #might wanna change to contains
+        #might wanna change to contains (not tested for RT)
         #prob limit more columns for visability
         df = df[(df["Location"] == Locname) & (df[Tag] != "clear")]
         col = [{"name": i, "id": i} for i in list(df.columns)]
         return df.to_dict('records'), col
     return [],[]
 
+#callback for updating location cells facet graph
 @app.callback(
     Output("graph", "figure"), 
     [Input("Loc", "value"),
@@ -243,6 +257,7 @@ def update_graph(Locname, yaxisname, Tag, srange, nint):
         fig.update_layout(uirevision=True)
     return fig
 
+#callback for downloading CSV
 @app.callback(Output("download", "data"), 
     [Input("times", "value"),
     Input("Loc", "value")])
@@ -251,9 +266,10 @@ def generate_csv(drtime, Locname):
         df = pd.read_csv("currdf.csv")
         df["KeyTime"]=df.KeyTime.astype('datetime64[ns]')
         df = df[(df["Location"] == Locname) & (df["KeyTime"] == drtime)]
-        #can do stuff  to dataframe here
+        #can do stuff  to dataframe here (trim down columns or w/e)
         return send_data_frame(df.to_csv, filename="battdata.csv", index=False)
 
+#callback for updating time dropdown
 @app.callback(Output('times', 'options'),
               [Input('Loc', 'value'),
               #Input('interval-component3', 'n_intervals')
@@ -267,12 +283,14 @@ def update_timedrop(Locname, nint):
         return [{'label': i, 'value': i} for i in df.KeyTime.dt.strftime('%B %d, %Y, %r').unique()]
     return []
 
+#callback for cell slider
 @app.callback(Output('rangeslider', 'max'),
               Input('Loc', 'value'))
 def update_slider(Locname):
     if Locname is not None and Locname == "Daly City Station":
         #not really necessary to do this but can be changed back
-        #changed to help RT alittle
+        #changed to help RT (less queries to csv also not connected to hidden elemet so breaks could happen) 
+        #if want to use the query update for this add hidden element as input
         #df = pd.read_csv("currdf.csv")
         #df["KeyTime"]=df.KeyTime.astype('datetime64[ns]')
         #df = df[df["Location"] == Locname]
@@ -281,11 +299,13 @@ def update_slider(Locname):
             return 180
     return 60
 
+#callback for cell slider string output
 @app.callback(Output('range-slider-label', 'children'),
     [Input('rangeslider', 'value')])
 def update_output(value):
     return 'Cells {} are selected for viewing'.format(value)
 
+#callback for ambient life battery table
 @app.callback(
     [Output('tablel', 'data'),
     Output('tablel','columns')],
