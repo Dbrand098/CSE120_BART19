@@ -28,7 +28,7 @@ query = """select history.cells.KeyTime, Location, CellNo, VoltValue, ResistValu
 query2 = """select history.bankdata.KeyTime, Location, AmbientTemp from info.bankinfo, history.bankdata 
         where history.bankdata.BankId = info.bankinfo.BankId"""
 
-#used for map with live data (will also include the colors)
+#used for map with live data (will also include the colors) not currently used as trimming was done with a normal query and pandas filters
 query3 = """select history.cells.KeyTime, Location from history.cells, info.bankinfo 
         where info.bankinfo.BankId = history.cells.BankId and KeyTime in (select max(KeyTime) from history.cells, info.bankinfo 
                                                                             where info.bankinfo.BankId = history.cells.BankId group by Location)"""
@@ -36,10 +36,8 @@ query3 = """select history.cells.KeyTime, Location from history.cells, info.bank
 
 df1 = pd.read_sql_query(query, connn)
 
-#testmean.csv is our battery commisioning feature
+#CurrentBaseline.csv is our battery commisioning feature
 df2 = pd.read_csv("CurrentBaseline.csv")
-#make little script for new baseline
-#df2 = df.groupby(["Location", "CellNo"], as_index=False).mean() <- made by 6 month data using this call (then do df to csv)
 df2.columns = ["Location", "CellNo","VoltMean", "ResistMean", "TempMean"]
 
 df3 = df1.groupby(["KeyTime","Location"], as_index=False).mean()
